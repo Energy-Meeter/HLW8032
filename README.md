@@ -36,6 +36,10 @@ The HLW8032 is a high precision energy metering IC that uses a CMOS process and 
 
 ### Application Notes
 
+<div align=center>
+  <img src="Docs/break_out.jpg">
+</div>
+
 For the following design two 5V supplies are used: one isolated for the MCU and one non-isolated for the HLW8032. Isolation can be achieved with a current type voltage transformer and current transformer together; details found [here][isolated energy monitor design].
 
 If a 3v3 MCU (e.g. an ESP32) is used, you'll need a level shifter since the GPIO pins will likely not be 5v tolerant.
