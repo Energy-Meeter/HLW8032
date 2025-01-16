@@ -138,9 +138,9 @@ class HLW8032
 		uint32_t GetPFAll();
 
 			
-		byte SerialBuffer[24];  
-		byte SerialDataLen = 0; 
-		bool SerialRead = 0;  
+		byte transmission[24];  
+		byte bytesInRXBuffer = 0; 
+		bool readSuccess = 0;  
 		
 	private:
 		/**
