@@ -34,28 +34,28 @@ void HLW8032::SerialReadLoop()
 {
 	if (SerialID->available()>0)   
 	{
+		// The HLW8032 transmits data every 50ms
 		delay(56);
 
 		// Get the number of bytes available to read from serial
-		SerialDataLen = SerialID->available();
+		bytesInRXBuffer = SerialID->available();
 		
-		// A full transmission is 24 bytes
-		// From state reg to checksum reg
-		if (SerialDataLen != TRANSMISSION_LENGTH)
+		// If there aren't enough bytes in the RX buffer
+		if (bytesInRXBuffer < TRANSMISSION_LENGTH)
 		{
-			// Clear the data out
+			// Empty the buffer
 			while(SerialID->read()>= 0){}
 			return;
 		}
 
-		// Read bytes into an array
-		for (byte a = 0; a < SerialDataLen; a++)  
+		// Read bytes into an 
+		for (byte a = 0; a < TRANSMISSION_LENGTH; a++)  
 		{
-			SerialBuffer[a] =  SerialID->read();
+			transmission[a] =  SerialID->read();
 		}
 
 		// Read the Check Register
-		if(SerialBuffer[1] != 0x5A) 
+		if(transmission[1] != 0x5A) 
 		{
 			while(SerialID->read()>= 0){}
 			return;
@@ -68,7 +68,7 @@ void HLW8032::SerialReadLoop()
 		}
 		
 		// Raise successful read flag
-		SerialRead = 1; 
+		readSuccess = 1; 
 
 		/*
 			HLW8032 transmits data in big endian byte ordering where
@@ -79,48 +79,47 @@ void HLW8032::SerialReadLoop()
 			Middle byte is multiplied by 2^8 (LSL 8)
 			Low byte is left unchanged
 		*/
-
-		VoltageParam = 	  ((uint32_t) SerialBuffer[2] <<16)
-						+ ((uint32_t) SerialBuffer[3] <<8)
-				 		+ SerialBuffer[4]; 
+		VoltageParam = 	  ((uint32_t) transmission[2] <<16)
+						+ ((uint32_t) transmission[3] <<8)
+				 		+ transmission[4]; 
 		
 		// Check if Voltage Register is done updating
-		if(bitRead(SerialBuffer[20], 6) == 1)  
+		if(bitRead(transmission[20], 6) == 1)  
 		{
-			VoltageData = 	  ((uint32_t) SerialBuffer[5] <<16)
-							+ ((uint32_t) SerialBuffer[6] <<8)
-							+ SerialBuffer[7];
+			VoltageData = 	  ((uint32_t) transmission[5] <<16)
+							+ ((uint32_t) transmission[6] <<8)
+							+ transmission[7];
 		}
 
-		CurrentParam =    ((uint32_t) SerialBuffer[8] <<16)
-					 	+ ((uint32_t) SerialBuffer[9] <<8)
-						+ SerialBuffer[10];
+		CurrentParam =    ((uint32_t) transmission[8] <<16)
+					 	+ ((uint32_t) transmission[9] <<8)
+						+ transmission[10];
 
 		// Check if Current Register is done updating
-		if(bitRead(SerialBuffer[20], 5) == 1)   
+		if(bitRead(transmission[20], 5) == 1)   
 		{
-			CurrentData =   ((uint32_t) SerialBuffer[11] <<16)
-						  + ((uint32_t) SerialBuffer[12] <<8)
-						  + SerialBuffer[13];  
+			CurrentData =   ((uint32_t) transmission[11] <<16)
+						  + ((uint32_t) transmission[12] <<8)
+						  + transmission[13];  
 		}
 
-		PowerParam = 	  ((uint32_t) SerialBuffer[14] <<16)
-						+ ((uint32_t) SerialBuffer[15] <<8)
-						+ SerialBuffer[16];   
+		PowerParam = 	  ((uint32_t) transmission[14] <<16)
+						+ ((uint32_t) transmission[15] <<8)
+						+ transmission[16];   
 
 		// Check if Power Register is done updating
-		if(bitRead(SerialBuffer[20], 4) == 1)   
+		if(bitRead(transmission[20], 4) == 1)   
 		{
-			PowerData = 	((uint32_t) SerialBuffer[17] <<16)
-			 			  + ((uint32_t) SerialBuffer[18] <<8)
-						  + SerialBuffer[19];    
+			PowerData = 	((uint32_t) transmission[17] <<16)
+			 			  + ((uint32_t) transmission[18] <<8)
+						  + transmission[19];    
 		}
 
-		PF = 			  ((uint16_t) SerialBuffer[21] <<8)
-						+ SerialBuffer[22];
+		PF = 			  ((uint16_t) transmission[21] <<8)
+						+ transmission[22];
 		
 		// PFdata refers to the number of times that PF has overflow'd
-		if(bitRead(SerialBuffer[20], 7) == 1)
+		if(bitRead(transmission[20], 7) == 1)
 		{
 			PFData++;
 		}
@@ -130,8 +129,8 @@ void HLW8032::SerialReadLoop()
 bool HLW8032::Checksum()
 {
 	byte check_sum = 0, a = 2;
-	for (;a <= TRANSMISSION_LENGTH-2; ++a) { check_sum += SerialBuffer[a]; }
-	if (check  == SerialBuffer[23]) { return true; }
+	for (;a <= TRANSMISSION_LENGTH-2; ++a) { check_sum += transmission[a]; }
+	if (check  == transmission[23]) { return true; }
 
 	return false;
 }
