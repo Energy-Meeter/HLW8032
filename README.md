@@ -49,8 +49,3 @@ If a 3v3 MCU (e.g. an ESP32) is used, you'll need a level shifter since the GPIO
 <div align=center>
   <img src="Docs/Schematic.png" >
 </div>
-
-## To Do
-
-- Update examples
-- Add unit tests
