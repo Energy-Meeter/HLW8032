@@ -29,3 +29,6 @@ fp-info-cache
 # Exported BOM files
 *.xml
 *.csv
+
+#some VSCode files that it automatically creates when using it
+.vscode/
