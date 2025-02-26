@@ -6,6 +6,7 @@
  * @version			1.0
  * 
  * Modified by Cullen Sharp 2024
+ * Optimizing/Debugging by Derek Hernandez 2025
  * 
  * This is a source file for a library to interact with a HLW8032 energy meter.
  */
@@ -130,9 +131,20 @@ bool HLW8032::Checksum()
 {
 	byte check_sum = 0, a = 2;
 	for (;a <= TRANSMISSION_LENGTH-2; ++a) { check_sum += transmission[a]; }
-	if (check  == transmission[23]) { return true; }
+	byte check = transmission[23];
+	if (check_sum == check) { return true; }
 
 	return false;
+}
+
+//Check for division by zero, and return 0 if true
+float checkDivisionOfZero(float denominator, float numerator)
+{
+	if (denominator == 0){
+		Serial.println("WARNING: (HLW8032): Division by zero. Set to 0 to avoid errors");
+		return 0.0;
+	}
+	return numerator / denominator;
 }
 
 // Setters
@@ -146,28 +158,28 @@ void HLW8032::setCCoeff(float CCoeff) { _CCoeff = CCoeff; }
 
 voltage_t HLW8032::GetEffVoltage()
 {
-	float Vol = (VoltageParam / VoltageData) * _VCoeff;   
+	float Vol = checkDivisionOfZero(VoltageParam , VoltageData) * _VCoeff;   
 	return Vol;
 } 
 
 
 voltage_t HLW8032::GetDividerVoltage()
 {
-	float DividerVoltage = VoltageParam / VoltageData;
+	float DividerVoltage = checkDivisionOfZero(VoltageParam , VoltageData);
 	return DividerVoltage;
 }
 
 
 current_t HLW8032::GetEffCurrent()
 {
-	current_t  Current = (CurrentParam / CurrentData) * _CCoeff;    
+	current_t  Current = checkDivisionOfZero(CurrentParam, CurrentData) * _CCoeff;    
 	return Current;
 }
 
 
 current_t HLW8032::GetShuntVoltage()
 {
-	voltage_t  ShuntVoltage  = CurrentParam / CurrentData;
+	voltage_t  ShuntVoltage  = checkDivisionOfZero(CurrentParam, CurrentData);
 	return ShuntVoltage;
 }
 
@@ -175,7 +187,7 @@ current_t HLW8032::GetShuntVoltage()
 
 power_t HLW8032::GetActivePower()
 {
-	power_t Power = (PowerParam/PowerData) * _VCoeff * _CCoeff;  
+	power_t Power = checkDivisionOfZero(PowerParam,PowerData) * _VCoeff * _CCoeff;  
 	return Power;
 }
 
@@ -194,7 +206,7 @@ unitless_t HLW8032::GetPowerFactor()
 	power_t ActivePower = GetActivePower();   
 	power_t ApparentPower = GetApparentPower();
 
-	return ActivePower / ApparentPower;  
+	return checkDivisionOfZero(ActivePower, ApparentPower);  
 }
 
 
@@ -205,11 +217,11 @@ uint32_t HLW8032::GetPFAll() { return PFData * PF; }
 energy_t HLW8032::GetKWh()
 {
 	// Calculates the pulse count for one kWh
-	uint32_t PulseCount = 	(1/PowerParam)
-						  * (1/(_VCoeff * _CCoeff))
+	uint32_t PulseCount = 	checkDivisionOfZero(1,PowerParam)
+						  * checkDivisionOfZero(1,(_VCoeff * _CCoeff))
 						  * 1000000000 * 3600;
 	
-	energy_t KWh = (PFData * PF) / PulseCount;  
+	energy_t KWh =checkDivisionOfZero((PFData * PF) , PulseCount);  
 	return KWh;
 
 }
