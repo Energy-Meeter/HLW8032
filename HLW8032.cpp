@@ -141,10 +141,12 @@ bool HLW8032::Checksum()
 float checkDivisionOfZero(float denominator, float numerator)
 {
 	if (denominator == 0){
-		Serial.println("WARNING: (HLW8032): Division by zero. Set to 0 to avoid errors");
-		return 0.0;
+		Serial.println("WARNING: (HLW8032): Division by zero. Set to -1 to avoid errors");
+		return -1;
 	}
+	else{
 	return numerator / denominator;
+	}
 }
 
 // Setters
